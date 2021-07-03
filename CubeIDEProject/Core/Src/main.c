@@ -70,14 +70,19 @@ static void mqtt_pub_request_cb(void *arg, err_t result)
 
 void example_publish(mqtt_client_t *client, void *arg)
 {
-  const char *pub_payload= "PubSubHubLubJub";
+   char message[10];
+  snprintf(message,10,"HOLA\n");
+
   err_t err;
-  u8_t qos = 2; /* 0 1 or 2, see MQTT specification */
+  u8_t qos = 0; /* 0 1 or 2, see MQTT specification */
   u8_t retain = 0; /* No don't retain such crappy payload... */
-  err = mqtt_publish(client, "pub_topic", pub_payload, strlen(pub_payload), qos, retain, mqtt_pub_request_cb, arg);
+  err = mqtt_publish(client, "pub_topic", message, 10, qos, retain, mqtt_pub_request_cb, arg);
   if(err != ERR_OK) {
+	  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_14);
+	  HAL_UART_Transmit(&huart3, &err,1,100);
     printf("Publish err: %d\n", err);
   }
+  mqtt_disconnect(client);
 }
 
 /* Called when publish is complete either with sucess or failure */
@@ -452,19 +457,15 @@ ipaddr_aton(mqtt_server,&ip_addr);
 
     if(client != NULL) {
       example_do_connect(client);
-
     }
-
-
-
-
-
-
 
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+	  example_publish(client, NULL);
+
+	  example_do_connect(client);
+	  osDelay(1000);
   }
   /* USER CODE END 5 */
 }
